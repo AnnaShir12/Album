@@ -79,6 +79,7 @@ Home.getInitialProps = async function(context) {
       if (res.status === 200) {
         const json = await res.json();
         cards = json.items;
+        console.log(cards);
       }
     }
   } catch (error) {
