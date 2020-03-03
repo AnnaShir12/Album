@@ -3,14 +3,20 @@ import fetch from "isomorphic-unfetch";
 import { InputGroup, Button, FormControl } from "react-bootstrap";
 import { useRouter } from "next/router";
 import { useState } from "react";
+import Link from "next/link";
 
 function Home({ cards }) {
   const [searchValue, setSearchValue] = useState("");
   const router = useRouter();
   // const { query } = router;
+  const handleChange = e => {
+    const changeValue = e.target.value;
+    setSearchValue(changeValue);
+  };
   const handleClick = e => {
     e.preventDefault();
-    router.push("/?q=d");
+    router.push(`/?q=${searchValue}`);
+    // console.log(searchValue);
   };
   // console.log(cards);
   return (
@@ -18,14 +24,14 @@ function Home({ cards }) {
       <div className="my-3 p-3 bg-white rounded shadow-sm">
         <InputGroup className="mb-3">
           <InputGroup.Prepend>
-            <Button onClick={handleClick} variant="outline-secondary">
-              Button
-            </Button>
             <FormControl
-              onChange={item => console.log(item)}
+              onChange={handleChange}
               value={searchValue}
               aria-describedby="basic-addon1"
             />
+            <Button onClick={handleClick} variant="outline-secondary">
+              Поиск
+            </Button>
           </InputGroup.Prepend>
         </InputGroup>
         <h6 className="border-bottom border-gray pb-2 mb-0">Suggestions</h6>
@@ -38,9 +44,11 @@ function Home({ cards }) {
                 src={card.avatar_url}
               />
               <div className="media-body pb-3 mb-0 small lh-125 border-bottom border-gray">
-                <div class="d-flex justify-content-between align-items-center w-100">
+                <div className="d-flex justify-content-between align-items-center w-100">
                   <strong className="text-gray-dark">{card.login}</strong>
-                  <a href="#">Follow</a>
+                  <Link href="/user/[login]" as={`/user/${card.login}`}>
+                    <a>Follow</a>
+                  </Link>
                 </div>
               </div>
             </div>
@@ -62,12 +70,22 @@ function Home({ cards }) {
 }
 
 Home.getInitialProps = async function(context) {
-  const res = await fetch(
-    `https://api.github.com/search/users?q=${context.query.q}`
-  );
-  const json = await res.json();
-  console.log(context);
-  return { cards: json.items };
+  const { q } = context.query;
+  let cards = [];
+
+  try {
+    if (q) {
+      const res = await fetch(`https://api.github.com/search/users?q=${q}`);
+      if (res.status === 200) {
+        const json = await res.json();
+        cards = json.items;
+      }
+    }
+  } catch (error) {
+    console.log("error =>", error);
+  }
+
+  return { cards };
 };
 
 export default Home;
